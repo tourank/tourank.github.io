@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Previous head and style sections remain exactly the same -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -56,14 +57,30 @@
             margin-bottom: 1.5rem;
         }
 
-        #automataCanvas {
+        .automata-container {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            opacity: 0.9;
-            width: 200px;
-            height: 200px;
+            bottom: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            pointer-events: none;
+            overflow: hidden;
+            mask-image: radial-gradient(circle at bottom right, black 10%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle at bottom right, black 10%, transparent 70%);
+        }
+
+        #automataCanvas {
+            position: absolute;
+            bottom: -50px;
+            right: -50px;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .automata-container {
+                width: 200px;
+                height: 200px;
+            }
         }
     </style>
 </head>
@@ -103,151 +120,211 @@
         </p>
     </main>
 
-    <canvas id="automataCanvas" width="200" height="200"></canvas>
+    <div class="automata-container">
+        <canvas id="automataCanvas"></canvas>
+    </div>
 
     <script>
-        const canvas = document.getElementById('automataCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        const hexSize = 8; // Reduced size to fit smaller canvas
-        const hexHeight = hexSize * 2;
-        const hexWidth = Math.sqrt(3) * hexSize;
-        const cols = Math.floor(canvas.width / hexWidth) - 1;
-        const rows = Math.floor(canvas.height / (hexHeight * 0.75)) - 1;
-
-        const COLORS = ['red', 'yellow', 'blue'];
-        let grid = Array(rows).fill().map(() => Array(cols).fill(null));
-
-        // [Previous helper functions remain exactly the same]
-        function getNextColor(currentColor) {
-            if (Math.random() < 0.15) {
-                return COLORS[Math.floor(Math.random() * COLORS.length)];
-            }
-            if (!currentColor) return COLORS[Math.floor(Math.random() * COLORS.length)];
-            const currentIndex = COLORS.indexOf(currentColor);
-            return COLORS[(currentIndex + 1) % COLORS.length];
-        }
-
-        function drawHexagon(x, y, size, color) {
-            ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
-                const angle = i * Math.PI / 3;
-                const xPos = x + size * Math.cos(angle);
-                const yPos = y + size * Math.sin(angle);
-                if (i === 0) ctx.moveTo(xPos, yPos);
-                else ctx.lineTo(xPos, yPos);
-            }
-            ctx.closePath();
-            ctx.fillStyle = color;
-            ctx.fill();
-        }
-
-        function countNeighbors(row, col) {
-            const isEvenRow = row % 2 === 0;
-            const directions = isEvenRow ? [
-                [-1, -1], [-1, 0], [0, -1], [0, 1], [1, -1], [1, 0]
-            ] : [
-                [-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0], [1, 1]
-            ];
-            
-            let count = 0;
-            let colors = { red: 0, yellow: 0, blue: 0 };
-            
-            for (const [dr, dc] of directions) {
-                const newRow = row + dr;
-                const newCol = col + dc;
+        class HexAutomata {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.context = this.canvas.getContext('2d');
+                this.CELL_R = 3;
+                this.COLORS = ["#ff3366", "#ffd700", "#4169e1"];
+                this.COLOR_BG = "transparent";
+                this.COLOR_FG = this.COLORS[0];
+                this.color_i = 0;
+                this.delay = 500;
+                this.then = Date.now();
+                this.isColored = true;
+                this.floodMap = {};
                 
-                if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
-                    const neighborColor = grid[newRow][newCol];
-                    if (neighborColor) {
-                        count++;
-                        colors[neighborColor]++;
+                this.RULES = {
+                    born: [1, 2],
+                    survives: [2, 4]
+                };
+                
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+            }
+
+            resizeCanvas() {
+                const container = this.canvas.parentElement;
+                const size = Math.max(container.offsetWidth, container.offsetHeight) + 100;
+                this.canvas.width = size;
+                this.canvas.height = size;
+                
+                this.WIDTH = Math.floor(size / (2 * this.CELL_R));
+                this.HEIGHT = Math.floor(size / (Math.sqrt(3) * this.CELL_R));
+                
+                this.initGridWithSingleCell();
+            }
+
+            initGridWithSingleCell() {
+                this.grid = Array(this.WIDTH).fill().map(() => 
+                    Array(this.HEIGHT).fill().map(() => ({
+                        alive: false,
+                        color: this.COLOR_FG
+                    }))
+                );
+
+                const centerX = Math.floor(this.WIDTH * 0.75);
+                const centerY = Math.floor(this.HEIGHT * 0.75);
+                this.grid[centerX][centerY].alive = true;
+            }
+
+            liveNeighborsHex(grid, i, j) {
+                const neighbors = [
+                    [i, j - 1], [i, j + 1],
+                    [i - 1, j], [i + 1, j],
+                    j % 2 === 1 ? [i + 1, j - 1] : [i - 1, j - 1],
+                    j % 2 === 1 ? [i + 1, j + 1] : [i - 1, j + 1]
+                ];
+
+                return neighbors.filter(([x, y]) => 
+                    x >= 0 && x < this.WIDTH &&
+                    y >= 0 && y < this.HEIGHT &&
+                    grid[x][y].alive
+                );
+            }
+
+            updateGrid() {
+                const newGrid = Array(this.WIDTH).fill().map(() => 
+                    Array(this.HEIGHT).fill().map(() => ({
+                        alive: false,
+                        color: this.COLOR_FG
+                    }))
+                );
+
+                for (let i = 0; i < this.WIDTH; i++) {
+                    for (let j = 0; j < this.HEIGHT; j++) {
+                        const nc = this.liveNeighborsHex(this.grid, i, j).length;
+                        
+                        if (this.grid[i][j].alive) {
+                            newGrid[i][j].alive = this.RULES.survives.includes(nc);
+                        } else {
+                            newGrid[i][j].alive = this.RULES.born.includes(nc);
+                        }
                     }
                 }
-            }
-            return { count, colors };
-        }
 
-        function createSeedPattern(centerRow, centerCol) {
-            if (centerRow >= 0 && centerRow < rows - 1 && centerCol >= 0 && centerCol < cols - 1) {
-                grid[centerRow][centerCol] = COLORS[Math.floor(Math.random() * COLORS.length)];
-                if (Math.random() < 0.8) {
-                    grid[centerRow + 1][centerCol] = COLORS[Math.floor(Math.random() * COLORS.length)];
+                this.grid = newGrid;
+            }
+
+            coords(i, j) {
+                if (j % 2 === 0) {
+                    return {
+                        x: i * 2 * this.CELL_R + this.CELL_R,
+                        y: j * Math.sqrt(3) * this.CELL_R + this.CELL_R
+                    };
+                } else {
+                    return {
+                        x: i * 2 * this.CELL_R + this.CELL_R * 2,
+                        y: j * Math.sqrt(3) * this.CELL_R + this.CELL_R
+                    };
                 }
-                if (Math.random() < 0.5) {
-                    grid[centerRow][centerCol + 1] = COLORS[Math.floor(Math.random() * COLORS.length)];
-                }
             }
-        }
 
-        function initializeGrid() {
-            grid = Array(rows).fill().map(() => Array(cols).fill(null));
-            
-            for (let i = 0; i < 3; i++) {
-                const centerRow = Math.floor(Math.random() * (rows - 4)) + 2;
-                const centerCol = Math.floor(Math.random() * (cols - 4)) + 2;
-                createSeedPattern(centerRow, centerCol);
+            getAngle(xy1, xy2) {
+                return Math.atan2(xy2.y - xy1.y, xy2.x - xy1.x);
             }
-        }
 
-        function updateGrid() {
-            const newGrid = Array(rows).fill().map(() => Array(cols).fill(null));
-            
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    const { count, colors } = countNeighbors(row, col);
-                    const currentState = grid[row][col];
+            drawNeighborConnectors(i, j) {
+                const xy = this.coords(i, j);
+                const neighbors = this.liveNeighborsHex(this.grid, i, j);
+                
+                for (const [nx, ny] of neighbors) {
+                    const n_xy = this.coords(nx, ny);
+                    const angle = this.getAngle(xy, n_xy);
                     
-                    if (currentState) {
-                        if (count === 3 || count === 4 || 
-                            (Math.random() < 0.3 && count === 2) ||
-                            (Math.random() < 0.15 && count === 1)) {
-                            newGrid[row][col] = getNextColor(currentState);
-                        }
-                    } else {
-                        if (count === 2 || (Math.random() < 0.1 && count === 3)) {
-                            const dominantColor = Object.entries(colors)
-                                .reduce((a, b) => b[1] > a[1] ? b : a, ['red', 0])[0];
-                            newGrid[row][col] = getNextColor(dominantColor);
+                    this.context.translate(xy.x, xy.y);
+                    this.context.rotate(angle);
+                    this.context.fillRect(0, -this.CELL_R, 2 * this.CELL_R, 2 * this.CELL_R);
+                    this.context.setTransform(1, 0, 0, 1, 0, 0);
+                }
+            }
+
+            drawCellAsCircle(i, j) {
+                this.context.beginPath();
+                const coords = this.coords(i, j);
+                this.context.arc(coords.x, coords.y, this.CELL_R, 0, 2 * Math.PI);
+                this.context.fill();
+            }
+
+            nextColor() {
+                this.color_i = (this.color_i + 1) % this.COLORS.length;
+                return this.COLORS[this.color_i];
+            }
+
+            floodfill(i, j, targetColor, replacementColor) {
+                const q = [[i, j]];
+                let count = 1;
+                this.grid[i][j].color = replacementColor;
+
+                while (q.length > 0) {
+                    const [x, y] = q.shift();
+                    const neighbors = this.liveNeighborsHex(this.grid, x, y);
+                    
+                    for (const [nx, ny] of neighbors) {
+                        if (this.grid[nx][ny].color === targetColor) {
+                            this.grid[nx][ny].color = replacementColor;
+                            q.push([nx, ny]);
+                            count++;
                         }
                     }
+                }
 
-                    if (!newGrid[row][col] && count > 0 && Math.random() < 0.005) {
-                        newGrid[row][col] = COLORS[Math.floor(Math.random() * COLORS.length)];
+                return count;
+            }
+
+            colorGrid() {
+                for (let i = 0; i < this.WIDTH; i++) {
+                    for (let j = 0; j < this.HEIGHT; j++) {
+                        if (this.grid[i][j].alive && this.grid[i][j].color === this.COLOR_FG) {
+                            const n = this.floodfill(i, j, this.COLOR_FG, 'temp');
+                            const color = this.floodMap[n] || this.nextColor();
+                            this.floodMap[n] = color;
+                            this.floodfill(i, j, 'temp', color);
+                        }
                     }
                 }
             }
-            
-            grid = newGrid;
-        }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    if (grid[row][col]) {
-                        const x = col * hexWidth + (row % 2) * (hexWidth / 2) + hexSize;
-                        const y = row * (hexHeight * 0.75) + hexSize;
-                        drawHexagon(x, y, hexSize, grid[row][col]);
+            draw() {
+                this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                if (this.isColored) {
+                    this.colorGrid();
+                }
+
+                for (let i = 0; i < this.WIDTH; i++) {
+                    for (let j = 0; j < this.HEIGHT; j++) {
+                        if (this.grid[i][j].alive) {
+                            this.context.fillStyle = this.grid[i][j].color;
+                            this.drawCellAsCircle(i, j);
+                            this.drawNeighborConnectors(i, j);
+                        }
                     }
                 }
             }
-        }
 
-        let frameCount = 0;
-        function animate() {
-            if (frameCount % 10 === 0) {
-                updateGrid();
+            animate() {
+                const now = Date.now();
+                const elapsed = now - this.then;
+
+                if (elapsed > this.delay) {
+                    this.updateGrid();
+                    this.draw();
+                    this.then = now;
+                }
+
+                requestAnimationFrame(() => this.animate());
             }
-            draw();
-            frameCount++;
-            requestAnimationFrame(animate);
         }
 
-        canvas.addEventListener('click', initializeGrid);
-        initializeGrid();
-        animate();
+        // Create and start animation
+        const automata = new HexAutomata('automataCanvas');
+        automata.animate();
     </script>
 </body>
 </html>
