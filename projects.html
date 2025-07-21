@@ -4,184 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projects - Your Portfolio</title>
-    <style>
-        :root {
-            --bg-color: #282828;
-            --text-color: #ebdbb2;
-            --accent-color: #fe8019;
-            --secondary-color: #a89984;
-            --border-color: #504945;
-        }
-
-        [data-theme="light"] {
-            --bg-color: #ffffff;
-            --text-color: #2d2d2d;
-            --accent-color: #fe8019;
-            --secondary-color: #666666;
-            --border-color: #e0e0e0;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Georgia', 'Times', serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .theme-toggle {
-            position: fixed;
-            top: 2rem;
-            right: 2rem;
-            background: transparent;
-            color: var(--secondary-color);
-            border: 1px solid var(--border-color);
-            padding: 0.4rem 0.6rem;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-            z-index: 1000;
-            font-family: inherit;
-        }
-
-        .theme-toggle:hover {
-            color: var(--text-color);
-            border-color: var(--secondary-color);
-            transform: translateY(-1px);
-        }
-
-        header {
-            margin-bottom: 3rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 2rem;
-        }
-
-        h1 {
-            font-size: 2rem;
-            font-weight: normal;
-            margin-bottom: 0.5rem;
-        }
-
-        nav {
-            margin-top: 1rem;
-        }
-
-        nav a {
-            color: var(--text-color);
-            text-decoration: none;
-            margin-right: 2rem;
-            font-size: 0.95rem;
-            transition: color 0.2s ease;
-        }
-
-        nav a:hover {
-            color: var(--accent-color);
-        }
-
-        nav a.active {
-            color: var(--accent-color);
-        }
-
-        section {
-            margin-bottom: 3rem;
-        }
-
-        h2 {
-            font-size: 1.3rem;
-            font-weight: normal;
-            margin-bottom: 1.5rem;
-            color: var(--accent-color);
-        }
-
-        .project-item {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .project-item:last-child {
-            border-bottom: none;
-        }
-
-        .project-title {
-            font-size: 1.1rem;
-            font-weight: normal;
-            margin-bottom: 0.5rem;
-        }
-
-        .project-title a {
-            color: var(--text-color);
-            text-decoration: none;
-        }
-
-        .project-title a:hover {
-            color: var(--accent-color);
-        }
-
-        .project-description {
-            color: var(--secondary-color);
-            font-size: 0.95rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .project-tech {
-            font-size: 0.85rem;
-            color: var(--secondary-color);
-        }
-
-        @media (max-width: 600px) {
-            body {
-                padding: 1rem;
-            }
-            
-            nav a {
-                display: block;
-                margin-bottom: 0.5rem;
-                margin-right: 0;
-            }
-            
-            .theme-toggle {
-                top: 1rem;
-                right: 1rem;
-                font-size: 1rem;
-                padding: 0.4rem;
-            }
-        }
-
-        .gif-container {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-        }
-
-        .gif-container img {
-            max-width: 100px;
-            height: auto;
-            border-radius: 8px;
-            opacity: 0.6;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+    
     <header>
-        <h1>Your Name</h1>
+        <h1>Touran Khan</h1>
         <nav>
+            <a href="index.html">Writings</a>
             <a href="projects.html" class="active">Projects</a>
             <a href="about.html">About</a>
-            <a href="index.html">Writings</a>
         </nav>
     </header>
 
@@ -225,34 +58,6 @@
         <img src="seeyou.gif" alt="See you">
     </div>
 
-    <script>
-        function toggleTheme() {
-            const body = document.body;
-            const themeToggle = document.querySelector('.theme-toggle');
-            
-            if (body.getAttribute('data-theme') === 'light') {
-                body.removeAttribute('data-theme');
-                themeToggle.textContent = '🌙';
-                localStorage.setItem('theme', 'dark');
-            } else {
-                body.setAttribute('data-theme', 'light');
-                themeToggle.textContent = '☀️';
-                localStorage.setItem('theme', 'light');
-            }
-        }
-
-        // Load saved theme on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme');
-            const themeToggle = document.querySelector('.theme-toggle');
-            
-            if (savedTheme === 'light') {
-                document.body.setAttribute('data-theme', 'light');
-                themeToggle.textContent = '☀️';
-            } else {
-                themeToggle.textContent = '🌙';
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
