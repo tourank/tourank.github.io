@@ -147,6 +147,9 @@ h2 {
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
+    /* Force hardware acceleration on iOS */
+    -webkit-transform: translateX(-50%) translateZ(0);
+    transform: translateX(-50%) translateZ(0);
 }
 
 .gif-container img {
@@ -175,7 +178,10 @@ h2 {
     }
     
     .gif-container {
-        bottom: max(1rem, env(safe-area-inset-bottom));
+        bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        /* iOS Safari specific fix */
+        bottom: calc(1rem + constant(safe-area-inset-bottom));
+        bottom: calc(1rem + env(safe-area-inset-bottom));
     }
     
     .gif-container img {
