@@ -175,14 +175,13 @@ h2 {
     }
     
     .gif-container {
-        position: fixed;
-        bottom: 0;
-        top: auto;
+        position: sticky;
+        position: -webkit-sticky;
+        bottom: 1rem;
+        top: calc(100vh - 120px);
         left: 50%;
         transform: translateX(-50%);
-        margin-bottom: 1rem;
-        /* iOS Safari hack */
-        bottom: calc(100vh - 100vh + 1rem);
+        z-index: 100;
     }
     
     .gif-container img {
