@@ -1,56 +1,65 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>About - Your Portfolio</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
     <script>
-        // Apply theme immediately to prevent flash
-        (function() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'light') {
-                document.documentElement.setAttribute('data-theme', 'light');
-            }
-        })();
+      // Apply theme immediately to prevent flash
+      (function () {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "light") {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
     </script>
-</head>
-<body>
-    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
-    
+  </head>
+  <body>
+    <button
+      class="theme-toggle"
+      onclick="toggleTheme()"
+      aria-label="Toggle theme"
+    >
+      🌙
+    </button>
+
     <header>
-        <h1>Touran Khan</h1>
-        <nav>
-            <a href="index.html">Writings</a>
-            <a href="projects.html">Projects</a>
-            <a href="about.html" class="active">About</a>
-        </nav>
+      <h1>Touran Khan</h1>
+      <nav>
+        <a href="index.html">Writings</a>
+        <a href="projects.html">Projects</a>
+        <a href="about.html" class="active">About</a>
+      </nav>
     </header>
 
     <main>
-        <section id="about">
-            <h2>About</h2>
-            <div class="about-content">
-                <p>
-                    Write a brief introduction about yourself. What do you do? What are you passionate about? 
-                    What drives your work and interests?
-                </p>
-                <p>
-                    Share your background, current focus, and what you're working on. Keep it personal 
-                    but professional, and let your personality shine through.
-                </p>
-                <p>
-                    You can mention your current role, interests, or what you're learning. Make it 
-                    authentic to who you are.
-                </p>
-            </div>
-        </section>
+      <section id="about">
+        <h2>About</h2>
+        <div class="about-content">
+          <p>
+            A generalist software engineer interested in a variety of
+            technologies. These days I’m in the Cloud with a strong interest in
+            all things web development and distributed systems, but you can also
+            find me hacking on graphics and machine learning software when the
+            opportunity arises. Of course everyone knows Linux and low level
+            systems rock. I find myself most engaged when solving hard problems
+            with code, a passion I’ve kept throughout most of my life.
+          </p>
+          <p>
+            When I’m not messing with bytes I like to draw and make music
+            (Ableton of course, my favourite programming language). If you’d
+            like to get in touch and chat, the best way is via my email or
+            twitter. ✌️
+          </p>
+        </div>
+      </section>
     </main>
 
     <div class="gif-container">
-        <img src="seeyou.gif" alt="See you">
+      <img src="seeyou.gif" alt="See you" />
     </div>
 
     <script src="script.js"></script>
-</body>
+  </body>
 </html>
